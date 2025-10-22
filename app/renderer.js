@@ -13,6 +13,5 @@ function launchGame(game) {
     'the-racer': gamePaths['the-racer']
   };
 
-  // Send the command to the main process to execute
   ipcRenderer.send('launch-game', launchCommands[game]);
 }
