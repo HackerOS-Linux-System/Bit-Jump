@@ -3,34 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HackerOS Gaming Hub</title>
+  <title>HackerOS Games</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-900 flex items-center justify-center min-h-screen">
-  <div class="game-hub container mx-auto p-6">
-    <h1 class="text-4xl font-bold text-center text-neon-green mb-8 animate-pulse pixel-font">HackerOS Gaming Hub</h1>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<body class="bg-gray-900 flex items-center justify-center min-h-screen overflow-hidden">
+  <div class="game-hub container mx-auto p-8 relative">
+    <h1 class="text-5xl font-bold text-center text-neon-green mb-12 animate-glitch pixel-font">HackerOS Games</h1>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- Starblaster -->
-      <div class="game-card bg-gray-800 rounded-lg p-4 transform hover:scale-105 transition-transform duration-300">
-        <img src="starblaster.png" alt="Starblaster Logo" class="w-full h-48 object-contain pixelated mb-4 animate-bounce-slow">
-        <h2 class="text-2xl font-bold text-white text-center pixel-font">Starblaster</h2>
-        <button onclick="launchGame('starblaster')" class="mt-4 w-full bg-neon-green text-black font-bold py-2 rounded hover:bg-neon-green-dark transition-colors pixel-font animate-pulse">Launch Game</button>
+      <div class="game-card bg-gray-800 rounded-lg p-6 transform hover:scale-105 transition-transform duration-300 shadow-neon">
+        <img src="starblaster.png" alt="Starblaster Logo" class="w-full h-64 object-contain pixelated mb-6 animate-pixel-bounce">
+        <h2 class="text-3xl font-bold text-white text-center pixel-font mb-4">Starblaster</h2>
+        <button onclick="launchGame('starblaster')" class="w-full bg-neon-green text-black font-bold py-3 rounded-lg hover:bg-neon-green-dark transition-colors pixel-font animate-pulse-neon">Launch</button>
       </div>
       <!-- Bit-Jump -->
-      <div class="game-card bg-gray-800 rounded-lg p-4 transform hover:scale-105 transition-transform duration-300">
-        <img src="bit-jump.png" alt="Bit-Jump Logo" class="w-full h-48 object-contain pixelated mb-4 animate-bounce-slow">
-        <h2 class="text-2xl font-bold text-white text-center pixel-font">Bit-Jump</h2>
-        <button onclick="launchGame('bit-jump')" class="mt-4 w-full bg-neon-blue text-black font-bold py-2 rounded hover:bg-neon-blue-dark transition-colors pixel-font animate-pulse">Launch Game</button>
+      <div class="game-card bg-gray-800 rounded-lg p-6 transform hover:scale-105 transition-transform duration-300 shadow-neon">
+        <img src="bit-jump.png" alt="Bit-Jump Logo" class="w-full h-64 object-contain pixelated mb-6 animate-pixel-bounce">
+        <h2 class="text-3xl font-bold text-white text-center pixel-font mb-4">Bit-Jump</h2>
+        <button onclick="launchGame('bit-jump')" class="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-neon-blue-dark transition-colors pixel-font animate-pulse-neon">Launch</button>
       </div>
       <!-- The-Racer -->
-      <div class="game-card bg-gray-800 rounded-lg p-4 transform hover:scale-105 transition-transform duration-300">
-        <img src="the-racer.png" alt="The-Racer Logo" class="w-full h-48 object-contain pixelated mb-4 animate-bounce-slow">
-        <h2 class="text-2xl font-bold text-white text-center pixel-font">The-Racer</h2>
-        <button onclick="launchGame('the-racer')" class="mt-4 w-full bg-neon-red text-black font-bold py-2 rounded hover:bg-neon-red-dark transition-colors pixel-font animate-pulse">Launch Game</button>
+      <div class="game-card bg-gray-800 rounded-lg p-6 transform hover:scale-105 transition-transform duration-300 shadow-neon">
+        <img src="the-racer.png" alt="The-Racer Logo" class="w-full h-64 object-contain pixelated mb-6 animate-pixel-bounce">
+        <h2 class="text-3xl font-bold text-white text-center pixel-font mb-4">The-Racer</h2>
+        <button onclick="launchGame('the-racer')" class="w-full bg-neon-red text-black font-bold py-3 rounded-lg hover:bg-neon-red-dark transition-colors pixel-font animate-pulse-neon">Launch</button>
       </div>
     </div>
+    <!-- Background animation -->
+    <div class="bg-particles absolute inset-0 pointer-events-none"></div>
   </div>
-  <script src="app.js"></script>
+  <script src="renderer.js"></script>
 </body>
 </html>
