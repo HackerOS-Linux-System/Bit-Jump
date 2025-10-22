@@ -4,17 +4,16 @@ const path = require('path');
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1280,
+    height: 900,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     },
-    icon: path.join(__dirname, 'starblaster.png') // Use one of the game logos as the app icon
+    icon: path.join(__dirname, 'hackeros.png') // Use hackeros.png as the app icon
   });
 
   win.loadFile('index.html');
-  // Remove the menu bar
   win.setMenuBarVisibility(false);
 }
 
