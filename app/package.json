@@ -8,25 +8,27 @@
     "build": "electron-builder --linux appimage"
   },
   "build": {
-    "appId": "com.hackeros.hackeros-games",
+    "appId": "com.hackeros.games",
     "productName": "HackerOS Games",
     "linux": {
       "target": ["AppImage"],
-      "category": "Game"
+      "category": "Game",
+      "icon": "hackeros.png"
     },
     "files": [
       "index.html",
       "styles.css",
       "renderer.js",
       "main.js",
+      "hackeros.png",
       "*.png"
     ]
   },
   "dependencies": {
-    "electron": "^22.0.0",
     "tailwindcss": "^2.2.19"
   },
   "devDependencies": {
+    "electron": "^22.0.0",
     "electron-builder": "^23.6.0"
   },
   "author": "HackerOS Team",
