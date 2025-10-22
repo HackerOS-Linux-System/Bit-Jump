@@ -1,11 +1,13 @@
-/* Pixel art and gaming aesthetic with Tailwind enhancements */
+/* Enhanced pixel-art and gaming aesthetic */
 body {
-  background: linear-gradient(135deg, #1a202c, #2d3748);
+  background: linear-gradient(135deg, #0d1219, #1e2a3c);
   font-family: 'Press Start 2P', cursive;
+  overflow: hidden;
 }
 
 .pixel-font {
   font-family: 'Press Start 2P', cursive;
+  text-transform: uppercase;
 }
 
 .pixelated {
@@ -14,20 +16,20 @@ body {
   image-rendering: crisp-edges;
 }
 
-/* Neon colors for gaming vibe */
+/* Neon colors with enhanced glow */
 .text-neon-green {
   color: #39ff14;
-  text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+  text-shadow: 0 0 5px #39ff14, 0 0 15px #39ff14, 0 0 30px #39ff14;
 }
 
 .text-neon-blue {
   color: #00b7eb;
-  text-shadow: 0 0 10px #00b7eb, 0 0 20px #00b7eb;
+  text-shadow: 0 0 5px #00b7eb, 0 0 15px #00b7eb, 0 0 30px #00b7eb;
 }
 
 .text-neon-red {
   color: #ff073a;
-  text-shadow: 0 0 10px #ff073a, 0 0 20px #ff073a;
+  text-shadow: 0 0 5px #ff073a, 0 0 15px #ff073a, 0 0 30px #ff073a;
 }
 
 .bg-neon-green {
@@ -54,39 +56,43 @@ body {
   background-color: #d90429;
 }
 
-/* Custom animations */
-@keyframes bounce-slow {
+/* Game card styling */
+.game-card {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  border: 2px solid #ffffff33;
+  transition: all 0.3s ease;
+}
+
+.shadow-neon {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(57, 255, 20, 0.5);
+}
+
+.game-card:hover {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(57, 255, 20, 0.7);
+}
+
+/* Animations */
+@keyframes pixel-bounce {
   0%, 100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-15px);
   }
 }
 
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
+.animate-pixel-bounce {
+  animation: pixel-bounce 1.8s ease-in-out infinite;
 }
 
-/* Game card hover effect */
-.game-card {
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.game-card:hover {
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
-}
-
-/* Button pulse animation */
-@keyframes pulse {
+@keyframes pulse-neon {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
   }
-  70% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
   }
   100% {
     transform: scale(1);
@@ -94,6 +100,37 @@ body {
   }
 }
 
-.animate-pulse {
-  animation: pulse 1.5s infinite;
+.animate-pulse-neon {
+  animation: pulse-neon 1.2s infinite;
+}
+
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+.animate-glitch {
+  animation: glitch 0.3s infinite;
+}
+
+/* Background particles for gaming vibe */
+.bg-particles {
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#glow)"><circle cx="10%" cy="20%" r="3" fill="#39ff14" opacity="0.5"><animate attributeName="cy" from="20%" to="80%" dur="5s" repeatCount="indefinite"/></circle><circle cx="30%" cy="50%" r="2" fill="#00b7eb" opacity="0.5"><animate attributeName="cy" from="50%" to="90%" dur="4s" repeatCount="indefinite"/></circle><circle cx="70%" cy="30%" r="4" fill="#ff073a" opacity="0.5"><animate attributeName="cy" from="30%" to="70%" dur="6s" repeatCount="indefinite"/></circle></g></svg>');
+  opacity: 0.3;
 }
