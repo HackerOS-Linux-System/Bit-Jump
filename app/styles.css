@@ -1,0 +1,99 @@
+/* Pixel art and gaming aesthetic with Tailwind enhancements */
+body {
+  background: linear-gradient(135deg, #1a202c, #2d3748);
+  font-family: 'Press Start 2P', cursive;
+}
+
+.pixel-font {
+  font-family: 'Press Start 2P', cursive;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Neon colors for gaming vibe */
+.text-neon-green {
+  color: #39ff14;
+  text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+}
+
+.text-neon-blue {
+  color: #00b7eb;
+  text-shadow: 0 0 10px #00b7eb, 0 0 20px #00b7eb;
+}
+
+.text-neon-red {
+  color: #ff073a;
+  text-shadow: 0 0 10px #ff073a, 0 0 20px #ff073a;
+}
+
+.bg-neon-green {
+  background-color: #39ff14;
+}
+
+.bg-neon-green-dark {
+  background-color: #2ecc40;
+}
+
+.bg-neon-blue {
+  background-color: #00b7eb;
+}
+
+.bg-neon-blue-dark {
+  background-color: #0099c9;
+}
+
+.bg-neon-red {
+  background-color: #ff073a;
+}
+
+.bg-neon-red-dark {
+  background-color: #d90429;
+}
+
+/* Custom animations */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* Game card hover effect */
+.game-card {
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.game-card:hover {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+}
+
+/* Button pulse animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 1.5s infinite;
+}
