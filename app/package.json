@@ -13,15 +13,14 @@
     "linux": {
       "target": ["AppImage"],
       "category": "Game",
-      "icon": "hackeros.png"
+      "icon": "images/hackeros.png"
     },
     "files": [
       "index.html",
       "styles.css",
       "renderer.js",
       "main.js",
-      "hackeros.png",
-      "*.png"
+      "images/*.png"
     ]
   },
   "dependencies": {
