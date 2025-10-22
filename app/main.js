@@ -10,7 +10,7 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false
     },
-    icon: path.join(__dirname, 'hackeros.png') // Use hackeros.png as the app icon
+    icon: path.join(__dirname, 'images/hackeros.png')
   });
 
   win.loadFile('index.html');
