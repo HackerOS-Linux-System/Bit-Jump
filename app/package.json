@@ -8,7 +8,7 @@
     "build": "electron-builder --linux appimage"
   },
   "build": {
-    "appId": "com.hackeros.games",
+    "appId": "com.hackeros.hackeros-games",
     "productName": "HackerOS Games",
     "linux": {
       "target": ["AppImage"],
