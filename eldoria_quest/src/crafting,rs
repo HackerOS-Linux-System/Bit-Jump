@@ -1,0 +1,69 @@
+use bevy::prelude::*;
+use super::components::*;
+use super::resources::*;
+use super::map::*;
+
+pub struct CraftingPlugin;
+
+impl Plugin for CraftingPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, crafting_system.run_if(in_state(GameState::InGame)));
+    }
+}
+
+#[derive(Clone)]
+struct Recipe {
+    inputs: Vec<(String, i32)>,
+    output: Item,
+}
+
+fn crafting_system(
+    mut inventory: ResMut<Inventory>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    settings: Res<GameSettings>,
+) {
+    if keyboard.just_pressed(settings.key_bindings.craft) {
+        let recipes = vec![
+            Recipe {
+                inputs: vec![("Wood".to_string(), 2), ("Stone".to_string(), 1)],
+                output: Item { name: "Axe".to_string(), value: 1, item_type: ItemType::Weapon },
+            },
+            Recipe {
+                inputs: vec![("Wood".to_string(), 1), ("Stone".to_string(), 2)],
+                output: Item { name: "Shield".to_string(), value: 1, item_type: ItemType::Armor },
+            },
+            Recipe {
+                inputs: vec![("Iron".to_string(), 2), ("Wood".to_string(), 1)],
+                output: Item { name: "Sword".to_string(), value: 1, item_type: ItemType::Weapon },
+            },
+            Recipe {
+                inputs: vec![("Wheat".to_string(), 3)],
+                output: Item { name: "Bread".to_string(), value: 1, item_type: ItemType::Consumable },
+            },
+        ];
+
+        for recipe in recipes {
+            let can_craft = recipe.inputs.iter().all(|(name, count)| {
+                let total = inventory.items.iter()
+                    .filter(|item| item.name == *name)
+                    .map(|item| item.value)
+                    .sum::<i32>();
+                total >= *count
+            });
+            if can_craft {
+                for (name, count) in recipe.inputs {
+                    let mut remaining = count;
+                    inventory.items.retain(|item| {
+                        if item.name == name && remaining > 0 {
+                            remaining -= item.value;
+                            false
+                        } else {
+                            true
+                        }
+                    });
+                }
+                inventory.items.push(recipe.output);
+            }
+        }
+    }
+}
