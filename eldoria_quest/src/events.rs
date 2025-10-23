@@ -7,15 +7,15 @@ use rand::Rng;
 pub struct EventsPlugin;
 
 impl Plugin for EventsPlugin {
-    fn build(&self, app: &mut App) {
+    fn build(&mut app: &mut App) {
         app.add_systems(Update, handle_events.run_if(in_state(GameState::InGame)))
-            .add_event::<TriggerEvent>();
+        .add_event::<TriggerEvent>();
     }
 }
 
-#[derive(Event)]
+#[derive(Event, Clone)]
 pub struct TriggerEvent {
-    pub event: Event,
+    pub event: resources::Event,
 }
 
 fn handle_events(
@@ -39,9 +39,9 @@ fn handle_events(
                                     1.0,
                                 ),
                                 sprite: Sprite {
-                                    color: Color::rgb(1.0, 0.0, 0.0),
-                                    custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
-                                    ..default()
+                                    color: Color::srgb(1.0, 0.0, 0.0),
+                                        custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
+                                        ..default()
                                 },
                                 ..default()
                             },
@@ -57,7 +57,7 @@ fn handle_events(
                                     EnemyType::Wolf => 15,
                                     _ => 10,
                                 },
-                                enemy_type: enemy_type.clone(),
+                                enemy_type: *enemy_type,
                                 faction_id: None,
                             },
                         ));
@@ -75,9 +75,9 @@ fn handle_events(
                                     1.0,
                                 ),
                                 sprite: Sprite {
-                                    color: Color::rgb(1.0, 1.0, 0.0),
-                                    custom_size: Some(Vec2::new(TILE_SIZE * 0.5, TILE_SIZE * 0.5)),
-                                    ..default()
+                                    color: Color::srgb(1.0, 1.0, 0.0),
+                                        custom_size: Some(Vec2::new(TILE_SIZE * 0.5, TILE_SIZE * 0.5)),
+                                        ..default()
                                 },
                                 ..default()
                             },
@@ -86,6 +86,7 @@ fn handle_events(
                     }
                 },
                 EventEffect::WeatherChange(_) => {}, // Handled in environment
+                _ => {},
             }
         }
     }
