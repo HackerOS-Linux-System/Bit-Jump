@@ -1,49 +1,142 @@
 import pygame
-import menu
-import game_modes
-from utils import load_game, save_game
-import os
+import sys
+from player import Player
+from enemy import SoundEnemy, LightEnemy, PatrolEnemy
+from maze import generate_maze
+from lighting import draw_lighting
+from items import Item
+from hud import draw_hud
+from utils import draw_text, LEVELS
 
+# Initialization
 pygame.init()
-pygame.mixer.init()
 
+# Constants
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+TILE_SIZE = 40
+FPS = 60
+MAX_LEVEL = 5
+
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# Screen
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Shadow Labyrinth")
+
+# Main game function
 def main():
-    high_score, championship_standings, settings = load_game()
-    flags = pygame.FULLSCREEN if settings["fullscreen"] else 0
-    screen = pygame.display.set_mode(settings["resolution"], flags)
-    pygame.display.set_caption("F1 Manager & Racer")
-    font = pygame.font.SysFont("arial", 36)
-    if os.path.exists("music.mp3"):
-        pygame.mixer.music.load("music.mp3")
-        pygame.mixer.music.set_volume(settings["music_volume"])
-        pygame.mixer.music.play(-1)
+    clock = pygame.time.Clock()
+    current_level = 1
+    score = 0
+    paused = False
 
-    while True:
-        choice, settings = menu.main_menu(screen, font, settings, high_score)
-        flags = pygame.FULLSCREEN if settings["fullscreen"] else 0
-        screen = pygame.display.set_mode(settings["resolution"], flags)
-        if choice == "race_setup":
-            track_name, num_opponents, max_laps, car_type, tire_type, settings = menu.race_setup_menu(screen, font, settings)
-            if track_name:
-                high_score = game_modes.race_mode(screen, track_name, num_opponents, max_laps, car_type, tire_type, settings, high_score)
-                save_game(high_score, championship_standings, settings)
-        elif choice == "championship":
-            result = game_modes.championship_mode(screen, font, settings, championship_standings)
-            if result:
-                high_score, championship_standings = result
-                save_game(high_score, championship_standings, settings)
-        elif choice == "practice":
-            track_name, duration, car_type, tire_type, settings = menu.practice_setup_menu(screen, font, settings)
-            if track_name:
-                game_modes.practice_mode(screen, track_name, duration, car_type, tire_type, settings)
-        elif choice == "time_attack":
-            track_name, car_type, tire_type, settings = menu.time_attack_setup_menu(screen, font, settings)
-            if track_name:
-                high_score = game_modes.race_mode(screen, track_name, 0, None, car_type, tire_type, settings, high_score)
-                save_game(high_score, championship_standings, settings)
-        elif choice == "settings":
-            settings = menu.settings_menu(screen, font, settings)
-            save_game(high_score, championship_standings, settings)
+    while current_level <= MAX_LEVEL:
+        maze_width, maze_height = LEVELS[current_level - 1]
+        walls = generate_maze(maze_width, maze_height)
+        player = Player(TILE_SIZE * 2, TILE_SIZE * 2)
+        enemies = pygame.sprite.Group()
+        num_sound = current_level * 2
+        num_light = current_level
+        num_patrol = current_level
+        for _ in range(num_sound):
+            enemies.add(SoundEnemy(walls))
+        for _ in range(num_light):
+            enemies.add(LightEnemy(walls))
+        for _ in range(num_patrol):
+            enemies.add(PatrolEnemy(walls))
+
+        items = pygame.sprite.Group()
+        for _ in range(10 + current_level * 2):
+            items.add(Item('battery', walls))
+        for _ in range(5 + current_level):
+            items.add(Item('torch', walls))
+        for _ in range(3 + current_level):
+            items.add(Item('health', walls))
+        for _ in range(2 + current_level):
+            items.add(Item('speed', walls))
+
+        # Exit position
+        exit_rect = pygame.Rect((maze_width - 2) * TILE_SIZE, (maze_height - 2) * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_p:
+                        paused = not paused
+
+            if paused:
+                draw_text(screen, "Paused", (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), WHITE, 50)
+                pygame.display.flip()
+                clock.tick(10)
+                continue
+
+            # Player update
+            player.update(walls, items)
+
+            # Collect items
+            collected = pygame.sprite.spritecollide(player, items, True)
+            for item in collected:
+                score += player.collect_item(item)
+
+            # Enemies update
+            sound_pos = player.get_sound_position() if player.moving else None
+            light_positions = player.get_light_positions()
+            for enemy in enemies:
+                enemy.update(player, walls, sound_pos, light_positions)
+
+            # Enemy collisions
+            collided_enemies = pygame.sprite.spritecollide(player, enemies, False)
+            for enemy in collided_enemies:
+                player.take_damage(enemy.damage)
+                if player.health <= 0:
+                    draw_text(screen, "Game Over! Score: " + str(score), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), WHITE, 40)
+                    pygame.display.flip()
+                    pygame.time.wait(3000)
+                    running = False
+                    sys.exit()
+
+            # Check exit
+            if player.rect.colliderect(exit_rect):
+                score += 100 * current_level
+                current_level += 1
+                if current_level > MAX_LEVEL:
+                    draw_text(screen, "Victory! Total Score: " + str(score), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), WHITE, 40)
+                    pygame.display.flip()
+                    pygame.time.wait(3000)
+                    running = False
+                    sys.exit()
+                else:
+                    draw_text(screen, "Level Complete! Score: " + str(score), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), WHITE, 40)
+                    pygame.display.flip()
+                    pygame.time.wait(2000)
+                    break
+
+            # Drawing
+            screen.fill(BLACK)
+            walls.draw(screen)
+            items.draw(screen)
+            enemies.draw(screen)
+            screen.blit(player.image, player.rect)
+            pygame.draw.rect(screen, (0, 255, 0), exit_rect)
+
+            # Lighting
+            draw_lighting(screen, player, walls, enemies, items, light_positions)
+
+            # HUD
+            draw_hud(screen, player, score, current_level)
+
+            pygame.display.flip()
+            clock.tick(FPS)
+
+    pygame.quit()
+    sys.exit()
 
 if __name__ == "__main__":
     main()
