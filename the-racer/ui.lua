@@ -1,6 +1,3 @@
--- ui.lua
--- Funkcje rysowania UI
-
 function drawMainMenu()
     love.graphics.printf("The Racer - Main Menu", 0, 100, 800, "center")
     love.graphics.printf("1. Team Setup", 0, 150, 800, "center")
