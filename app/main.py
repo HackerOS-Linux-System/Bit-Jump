@@ -1,191 +1,238 @@
-import sys
-import os
+import typer
 import subprocess
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGridLayout, QMainWindow
-from PySide6.QtGui import QFont, QPixmap, QIcon, QFontDatabase, QLinearGradient, QBrush, QColor, QPainter, QPalette, QMovie
-from PySide6.QtCore import Qt, QPropertyAnimation, QSequentialAnimationGroup, QRect, QTimer, QAbstractAnimation, QEasingCurve, QUrl, QPoint, QElapsedTimer
-# Use system icons directory
-IMAGES_DIR = '/usr/share/HackerOS/ICONS'
-# Game paths and commands (hardcoded as in original)
-GAME_PATHS = {
-    'starblaster': '/usr/share/HackerOS/Scripts/HackerOS-Games/starblaster',
-    'bit-jump': '/usr/share/HackerOS/Scripts/Bin/Bit-Jump.hacker',
-    'the-racer': '/usr/share/HackerOS/Scripts/HackerOS-Games/the-racer'
+import os
+from typing import Optional
+from rich.console import Console
+from rich.table import Table
+
+# PySide6 imports for GUI
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QLabel, QGridLayout, QFrame, QMessageBox
+)
+from PySide6.QtGui import QFont, QColor, QPalette, QIcon
+from PySide6.QtCore import Qt, QSize
+
+# Initialize Typer app
+app = typer.Typer(
+    name="hackeros-games",
+    help="HackerOS Games Launcher - Launch your favorite HackerOS games from the command line.",
+    add_completion=False,
+    rich_markup_mode="rich",
+)
+
+# Define game configurations
+GAMES = {
+    "starblaster": {
+        "description": "Blast through stars in this exciting space shooter!",
+        "path": "/usr/share/HackerOS/Scripts/HackerOS-Games/starblaster",
+        "command": lambda path: [path],
+        "color": "#00FF00",  # Green for GUI
+        "theme_color": QColor(0, 255, 0),
+    },
+    "bit-jump": {
+        "description": "Jump through bits in this platformer adventure!",
+        "path": "/usr/share/HackerOS/Scripts/Bin/Bit-Jump.hacker",
+        "command": lambda path: ["hackerc", "run", path],
+        "color": "#0000FF",  # Blue for GUI
+        "theme_color": QColor(0, 0, 255),
+    },
+    "the-racer": {
+        "description": "Race through circuits in this high-speed thriller!",
+        "path": "/usr/share/HackerOS/Scripts/HackerOS-Games/the-racer",
+        "command": lambda path: [path],
+        "color": "#FF0000",  # Red for GUI
+        "theme_color": QColor(255, 0, 0),
+    },
 }
-LAUNCH_COMMANDS = {
-    'starblaster': [GAME_PATHS['starblaster']],
-    'bit-jump': ['hackerc', 'run', GAME_PATHS['bit-jump']],
-    'the-racer': [GAME_PATHS['the-racer']]
-}
-class ParticleWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.particles = [
-            {'cx_start': 0.10, 'cx_end': 0.15, 'cx_dur': 4, 'cy_start': 0.15, 'cy_end': 0.85, 'cy_dur': 4, 'r': 5, 'color': QColor(57, 255, 20, 178)},
-            {'cx_start': 0.30, 'cx_end': 0.35, 'cx_dur': 5, 'cy_start': 0.50, 'cy_end': 0.95, 'cy_dur': 5, 'r': 4, 'color': QColor(0, 183, 235, 178)},
-            {'cx_start': 0.60, 'cx_end': 0.55, 'cx_dur': 4.5, 'cy_start': 0.25, 'cy_end': 0.75, 'cy_dur': 4.5, 'r': 6, 'color': QColor(255, 7, 58, 178)},
-            {'cx_start': 0.80, 'cx_end': 0.85, 'cx_dur': 5.5, 'cy_start': 0.40, 'cy_end': 0.90, 'cy_dur': 5.5, 'r': 3, 'color': QColor(255, 255, 255, 153)},
-            {'cx_start': 0.20, 'cx_end': 0.25, 'cx_dur': 4.8, 'cy_start': 0.70, 'cy_end': 0.20, 'cy_dur': 4.8, 'r': 4, 'color': QColor(57, 255, 20, 178)}
-        ]
-        self.elapsed = QElapsedTimer()
-        self.elapsed.start()
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update)
-        self.timer.start(16) # ~60 FPS
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        w, h = self.width(), self.height()
-        for p in self.particles:
-            # cx
-            dur_cx = p['cx_dur'] * 1000
-            t_cx = self.elapsed.elapsed() % dur_cx
-            frac_cx = t_cx / dur_cx
-            cx = p['cx_start'] + frac_cx * (p['cx_end'] - p['cx_start'])
-            cx_abs = cx * w
-            # cy
-            dur_cy = p['cy_dur'] * 1000
-            t_cy = self.elapsed.elapsed() % dur_cy
-            frac_cy = t_cy / dur_cy
-            cy = p['cy_start'] + frac_cy * (p['cy_end'] - p['cy_start'])
-            cy_abs = cy * h
-            painter.setBrush(QBrush(p['color']))
-            painter.setPen(Qt.NoPen)
-            painter.drawEllipse(int(cx_abs - p['r']), int(cy_abs - p['r']), int(p['r']*2), int(p['r']*2))
-class GameCard(QWidget):
-    def __init__(self, game_name, image_file, color_class, parent=None):
-        super().__init__(parent)
-        self.game_name = game_name
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40) # p-10
-        # Image
-        self.image_label = QLabel()
-        image_path = os.path.join(IMAGES_DIR, image_file)
-        pixmap = QPixmap(image_path)
-        self.image_label.setPixmap(pixmap.scaledToHeight(320, Qt.SmoothTransformation)) # h-80 approximate
-        self.image_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.image_label)
-        # Animate pixel-bounce
-        self.bounce_anim = QPropertyAnimation(self.image_label, b'pos')
-        self.bounce_anim.setDuration(1400)
-        self.bounce_anim.setLoopCount(-1)
-        self.bounce_anim.setEasingCurve(QEasingCurve.InOutSine)
-        start_pos = self.image_label.pos()
-        self.bounce_anim.setKeyValueAt(0, start_pos)
-        self.bounce_anim.setKeyValueAt(0.5, start_pos + QPoint(0, -25))
-        self.bounce_anim.setKeyValueAt(1, start_pos)
-        self.bounce_anim.start()
-        # Title
-        title = QLabel(game_name.replace('-', ' ').title())
-        title.setFont(QFont('Press Start 2P', 24)) # text-4xl
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("color: white;")
-        layout.addWidget(title)
-        # Button
-        button = QPushButton('Launch')
-        button.setFont(QFont('Press Start 2P', 12))
-        neon_color = self.get_neon_color(color_class)
-        dark_color = self.get_dark_color(color_class)
-        button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {neon_color};
-                color: black;
-                padding: 16px;
-                border-radius: 8px;
-            }}
-            QPushButton:hover {{
-                background-color: {dark_color};
-            }}
-        """)
-        button.clicked.connect(self.launch_game)
-        layout.addWidget(button)
-        # Card style
-        shadow_color = self.get_shadow_color(color_class)
-        self.setStyleSheet(f"""
-            background-color: #1a2533;
-            border-radius: 16px;
-            border: 4px solid #ffffff55;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), {shadow_color};
-        """)
-    def get_neon_color(self, color_class):
-        if color_class == 'green': return '#39ff14'
-        if color_class == 'blue': return '#00b7eb'
-        if color_class == 'red': return '#ff073a'
-        return '#39ff14'
-    def get_dark_color(self, color_class):
-        if color_class == 'green': return '#2ecc40'
-        if color_class == 'blue': return '#0099c9'
-        if color_class == 'red': return '#d90429'
-        return '#2ecc40'
-    def get_shadow_color(self, color_class):
-        if color_class == 'green': return '0 0 40px rgba(57, 255, 20, 0.7), 0 0 80px rgba(57, 255, 20, 0.5)'
-        if color_class == 'blue': return '0 0 40px rgba(0, 183, 235, 0.7), 0 0 80px rgba(0, 183, 235, 0.5)'
-        if color_class == 'red': return '0 0 40px rgba(255, 7, 58, 0.7), 0 0 80px rgba(255, 7, 58, 0.5)'
-        return '0 0 40px rgba(57, 255, 20, 0.7), 0 0 80px rgba(57, 255, 20, 0.5)'
-    def launch_game(self):
-        command = LAUNCH_COMMANDS.get(self.game_name)
-        if command:
-            try:
-                subprocess.Popen(command)
-            except Exception as e:
-                print(f"Error launching {self.game_name}: {e}")
-class MainWindow(QMainWindow):
+
+# Rich console for pretty output in CLI
+console = Console()
+
+def launch_game(game_name: str):
+    """
+    Launch the specified game using subprocess.
+    """
+    if game_name not in GAMES:
+        console.print(f"[bold red]Error:[/bold red] Game '{game_name}' not found.")
+        raise typer.Exit(code=1)
+    game = GAMES[game_name]
+    path = game["path"]
+    if not os.path.exists(path):
+        console.print(f"[bold red]Error:[/bold red] Game path '{path}' does not exist.")
+        raise typer.Exit(code=1)
+    command = game["command"](path)
+    try:
+        console.print(f"[bold {game['color']}]Launching {game_name.replace('-', ' ').title()}...[/bold {game['color']}]")
+        subprocess.Popen(command)
+    except Exception as e:
+        console.print(f"[bold red]Error launching {game_name}: {e}[/bold red]")
+        raise typer.Exit(code=1)
+
+@app.command(help="Launch Starblaster game.")
+def starblaster():
+    launch_game("starblaster")
+
+@app.command(help="Launch Bit-Jump game.")
+def bit_jump():  # Use underscore for CLI hyphen
+    launch_game("bit-jump")
+
+@app.command(help="Launch The-Racer game.")
+def the_racer():  # Use underscore for CLI hyphen
+    launch_game("the-racer")
+
+@app.command(help="List all available games.")
+def list_games():
+    table = Table(title="Available HackerOS Games", show_header=True, header_style="bold magenta")
+    table.add_column("Game Name", style="cyan", no_wrap=True)
+    table.add_column("Description", style="green")
+    table.add_column("Command", style="yellow")
+    for game_name, game in GAMES.items():
+        table.add_row(
+            f"[bold {game['color']}] {game_name.replace('-', ' ').title()} [/bold {game['color']}]",
+            game["description"],
+            f"hackeros-games {game_name}",
+        )
+    console.print(table)
+
+@app.command(help="Show detailed information about a specific game.")
+def info(game_name: str = typer.Argument(..., help="The name of the game (e.g., starblaster, bit-jump, the-racer)")):
+    if game_name not in GAMES:
+        console.print(f"[bold red]Error:[/bold red] Game '{game_name}' not found.")
+        raise typer.Exit(code=1)
+    game = GAMES[game_name]
+    console.print(f"[bold underline]Game Information: {game_name.replace('-', ' ').title()}[/bold underline]")
+    console.print(f"[bold]Description:[/bold] {game['description']}")
+    console.print(f"[bold]Path:[/bold] {game['path']}")
+    console.print(f"[bold]Launch Command:[/bold] hackeros-games {game_name}")
+    console.print(f"[bold]Color Theme:[/bold] [ {game['color']} ]{game['color'].capitalize()}[/ {game['color']} ]")
+
+# GUI Class Definition
+class HackerOSGamesLauncher(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("HackerOS Games")
-        self.setGeometry(100, 100, 1280, 900)
-        self.setWindowIcon(QIcon(os.path.join(IMAGES_DIR, 'HackerOS-Games.png')))
+        self.setWindowTitle("HackerOS Games Launcher")
+        self.setGeometry(100, 100, 800, 600)
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #1E1E1E;
+            }
+            QLabel {
+                color: #FFFFFF;
+                font-size: 14px;
+            }
+            QPushButton {
+                background-color: #333333;
+                color: #FFFFFF;
+                border: 1px solid #555555;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #444444;
+            }
+            QFrame {
+                background-color: #2A2A2A;
+                border: 1px solid #444444;
+                border-radius: 8px;
+            }
+        """)
+
         # Central widget
-        central = QWidget()
-        self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(40, 40, 40, 40) # p-10
-        # Background gradient
-        palette = central.palette()
-        gradient = QLinearGradient(0, 0, self.width(), self.height())
-        gradient.setColorAt(0, QColor(8, 12, 20))
-        gradient.setColorAt(1, QColor(22, 32, 47))
-        palette.setBrush(QPalette.Window, QBrush(gradient))
-        central.setPalette(palette)
-        central.setAutoFillBackground(True)
-        # Title
-        title = QLabel("HackerOS Games")
-        title.setFont(QFont('Press Start 2P', 48)) # text-6xl
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("color: #39ff14; text-shadow: 0 0 10px #39ff14, 0 0 25px #39ff14, 0 0 50px #39ff14;")
-        main_layout.addWidget(title)
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout()
+        central_widget.setLayout(main_layout)
+
+        # Title label
+        title_label = QLabel("Welcome to HackerOS Games!")
+        title_label.setFont(QFont("Arial", 24, QFont.Bold))
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("color: #00FF00;")
+        main_layout.addWidget(title_label)
+
         # Grid for games
-        grid = QGridLayout()
-        grid.setSpacing(48) # gap-12
-        # Starblaster
-        starblaster = GameCard('starblaster', 'starblaster.png', 'green')
-        grid.addWidget(starblaster, 0, 0)
-        # Bit-Jump
-        bitjump = GameCard('bit-jump', 'Bit-Jump.png', 'blue')
-        grid.addWidget(bitjump, 0, 1)
-        # The-Racer
-        racer = GameCard('the-racer', 'The-Racer.png', 'red')
-        grid.addWidget(racer, 0, 2)
-        main_layout.addLayout(grid)
-        # Logo
-        self.logo = QLabel(central)
-        logo_pixmap = QPixmap(os.path.join(IMAGES_DIR, 'HackerOS-Games.png')).scaled(80, 80, Qt.KeepAspectRatio)
-        self.logo.setPixmap(logo_pixmap)
-        self.logo.setFixedSize(80, 80)
-        self.logo.move(self.width() - 100, 24) # top-6 right-6
-        self.logo.raise_()
-        # Particles
-        self.particles = ParticleWidget(central)
-        self.particles.setGeometry(0, 0, self.width(), self.height())
-        self.particles.lower()
-    def resizeEvent(self, event):
-        self.particles.setGeometry(0, 0, self.width(), self.height())
-        self.logo.move(self.width() - 100, 24)
-        super().resizeEvent(event)
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    # Assume 'Press Start 2P' font is installed system-wide; no need to load from file
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+        grid_layout = QGridLayout()
+        main_layout.addLayout(grid_layout)
+
+        # Add game cards
+        row = 0
+        col = 0
+        for game_name, game in GAMES.items():
+            card = self.create_game_card(game_name, game)
+            grid_layout.addWidget(card, row, col)
+            col += 1
+            if col > 1:  # 2 columns
+                col = 0
+                row += 1
+
+        # Footer
+        footer_label = QLabel("Choose a game to launch")
+        footer_label.setAlignment(Qt.AlignCenter)
+        footer_label.setStyleSheet("color: #AAAAAA; font-size: 12px;")
+        main_layout.addWidget(footer_label)
+
+    def create_game_card(self, game_name: str, game: dict):
+        card = QFrame()
+        card_layout = QVBoxLayout()
+        card.setLayout(card_layout)
+        card.setFixedSize(350, 200)
+
+        # Game title
+        title = QLabel(game_name.replace('-', ' ').title())
+        title.setFont(QFont("Arial", 18, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet(f"color: {game['color']};")
+        card_layout.addWidget(title)
+
+        # Description
+        desc = QLabel(game["description"])
+        desc.setWordWrap(True)
+        desc.setAlignment(Qt.AlignCenter)
+        card_layout.addWidget(desc)
+
+        # Launch button
+        launch_btn = QPushButton("Launch")
+        launch_btn.setStyleSheet(f"""
+            background-color: {game['color']};
+            color: #000000;
+            font-weight: bold;
+        """)
+        launch_btn.setFixedHeight(40)
+        launch_btn.clicked.connect(lambda: self.launch_game_gui(game_name))
+        card_layout.addWidget(launch_btn)
+
+        return card
+
+    def launch_game_gui(self, game_name: str):
+        if game_name not in GAMES:
+            QMessageBox.warning(self, "Error", f"Game '{game_name}' not found.")
+            return
+        game = GAMES[game_name]
+        path = game["path"]
+        if not os.path.exists(path):
+            QMessageBox.warning(self, "Error", f"Game path '{path}' does not exist.")
+            return
+        command = game["command"](path)
+        try:
+            subprocess.Popen(command)
+            QMessageBox.information(self, "Launching", f"Launching {game_name.replace('-', ' ').title()}...")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error launching {game_name}: {e}")
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context):
+    if ctx.invoked_subcommand is None:
+        # Launch GUI instead of CLI output
+        qt_app = QApplication([])
+        window = HackerOSGamesLauncher()
+        window.show()
+        qt_app.exec()
+    else:
+        # For subcommands, proceed as usual
+        pass
+
+if __name__ == "__main__":
+    app()
